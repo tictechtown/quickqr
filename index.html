@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QuickQR — Instant QR Code Generator</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@picocss/pico@2.1.1/css/pico.indigo.min.css"
+    />
+    <style>
+      :root {
+        --pico-border-radius: 1em;
+      }
+
+      body {
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 10% 10%, #f7e8d0, transparent 45%),
+          radial-gradient(circle at 90% 15%, #d6efe7, transparent 40%),
+          linear-gradient(140deg, #fbfaf7 0%, #f4f8f6 50%, #fdf8ef 100%);
+      }
+
+      header {
+        margin: 3rem 0 2rem;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 2.5rem;
+        align-items: stretch;
+      }
+
+
+      .tagline {
+        font-size: 1.1rem;
+        max-width: 60ch;
+        color: rgba(23, 34, 28, 0.8);
+      }
+
+      .qr-preview {
+        display: grid;
+        place-items: center;
+        gap: 1.25rem;
+        text-align: center;
+      }
+
+      .qr-canvas {
+        background: #fff;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(20, 40, 32, 0.12);
+        padding: 1rem;
+        box-shadow: inset 0 0 0 1px rgba(10, 20, 15, 0.02);
+        transition: opacity 160ms ease;
+      }
+
+      .muted {
+        color: rgba(23, 34, 28, 0.7);
+      }
+
+      .disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .download-btn svg {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .download-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .size-control {
+        display: flex;
+        gap: 1em;
+      }
+
+      .size-control input[type="range"] {
+        width: 180px;
+      }
+
+      @media (max-width: 1024px) {
+        header {
+          margin-top: 2rem;
+        }
+
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>QuickQR</h1>
+        <p class="tagline">
+          Create a clean QR code in seconds. Paste a link, preview instantly, and
+          download a PNG in one click.
+        </p>
+      </header>
+
+      <section class="layout">
+        <article>
+          <h2>Enter a URL</h2>
+          <p class="muted">
+            QR code entirely in your browser. Nothing is stored
+            or sent anywhere.
+          </p>
+          <label for="url-input">Website or link</label>
+          <input
+            id="url-input"
+            name="url-input"
+            type="url"
+            inputmode="url"
+            placeholder="https://example.com/launch"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          />
+        </article>
+
+        <article class="qr-preview">
+          <h2>Preview</h2>
+          <canvas
+            id="qr-canvas"
+            class="qr-canvas"
+            width="280"
+            height="280"
+            aria-label="Generated QR code preview"
+            role="img"
+          ></canvas>
+          <p id="status" class="muted">Enter a URL to generate your code.</p>
+          
+          <footer class="download-row">
+            <a
+              id="download-btn"
+              class="primary disabled download-btn"
+              role="button"
+              download="qr-code.png"
+              href="#"
+              aria-disabled="true"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+                fill="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
+              </svg>
+              Download PNG
+            </a>
+            <div class="size-control">
+              <label for="size-range">Size</label>
+              <input
+                id="size-range"
+                type="range"
+                min="50"
+                max="1000"
+                step="10"
+                value="280"
+              />
+              <span id="size-value" class="muted">280px</span>
+            </div>
+          </footer>
+        </article>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script>
+      const input = document.getElementById("url-input");
+      const canvas = document.getElementById("qr-canvas");
+      const downloadBtn = document.getElementById("download-btn");
+      const sizeRange = document.getElementById("size-range");
+      const sizeValue = document.getElementById("size-value");
+      const status = document.getElementById("status");
+      const previewSize = canvas.width;
+
+      const qrPreview = new QRious({
+        element: canvas,
+        size: previewSize,
+        value: "",
+        level: "H",
+      });
+
+      const downloadCanvas = document.createElement("canvas");
+      const qrDownload = new QRious({
+        element: downloadCanvas,
+        size: previewSize,
+        value: "",
+        level: "H",
+      });
+
+      const getTargetSize = () => {
+        const parsed = Number.parseInt(sizeRange.value, 10);
+        if (Number.isNaN(parsed)) {
+          return previewSize;
+        }
+        return Math.min(1000, Math.max(50, parsed));
+      };
+
+      const setDownloadState = (enabled) => {
+        if (enabled) {
+          downloadBtn.classList.remove("disabled");
+          downloadBtn.removeAttribute("aria-disabled");
+        } else {
+          downloadBtn.classList.add("disabled");
+          downloadBtn.setAttribute("aria-disabled", "true");
+          downloadBtn.setAttribute("href", "#");
+        }
+      };
+
+      const updateQr = () => {
+        const value = input.value.trim();
+        const targetSize = getTargetSize();
+        sizeValue.textContent = `${targetSize}px`;
+        if (!value) {
+          qrPreview.value = "";
+          canvas.style.opacity = 0.35;
+          status.textContent = "Enter a URL to generate your code.";
+          setDownloadState(false);
+          return;
+        }
+
+        qrPreview.value = value;
+        qrDownload.size = targetSize;
+        qrDownload.value = value;
+        canvas.style.opacity = 1;
+        status.textContent = "Preview ready.";
+        downloadBtn.setAttribute("href", downloadCanvas.toDataURL("image/png"));
+        setDownloadState(true);
+      };
+
+      input.addEventListener("input", updateQr);
+      sizeRange.addEventListener("input", updateQr);
+
+      updateQr();
+    </script>
+  </body>
+</html>
