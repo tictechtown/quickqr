@@ -4,9 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>QuickQR — Instant QR Code Generator</title>
+    <meta
+      name="description"
+      content="Generate a QR code instantly in your browser. Paste a URL, preview it, and download a PNG in seconds."
+    />
     <link
       rel="stylesheet"
-      href="https://unpkg.com/@picocss/pico@2.1.1/css/pico.indigo.min.css"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css"
     />
     <style>
       :root {
@@ -21,6 +25,15 @@
           linear-gradient(140deg, #fbfaf7 0%, #f4f8f6 50%, #fdf8ef 100%);
       }
 
+      @media (prefers-color-scheme: dark) {
+        body {
+          background:
+            radial-gradient(circle at 15% 15%, rgba(53, 78, 90, 0.45), transparent 50%),
+            radial-gradient(circle at 85% 10%, rgba(64, 45, 88, 0.5), transparent 45%),
+            linear-gradient(150deg, #0b1110 0%, #121c1a 45%, #0e1a1d 100%);
+        }
+      }
+
       header {
         margin: 3rem 0 2rem;
       }
@@ -32,17 +45,7 @@
         align-items: stretch;
       }
 
-
-      .tagline {
-        font-size: 1.1rem;
-        max-width: 60ch;
-        color: rgba(23, 34, 28, 0.8);
-      }
-
       .qr-preview {
-        display: grid;
-        place-items: center;
-        gap: 1.25rem;
         text-align: center;
       }
 
@@ -56,7 +59,7 @@
       }
 
       .muted {
-        color: rgba(23, 34, 28, 0.7);
+        color: var(--pico-muted-color);
       }
 
       .disabled {
@@ -108,7 +111,7 @@
     <main class="container">
       <header>
         <h1>QuickQR</h1>
-        <p class="tagline">
+        <p>
           Create a clean QR code in seconds. Paste a link, preview instantly, and
           download a PNG in one click.
         </p>
@@ -169,7 +172,7 @@
               Download PNG
             </a>
             <div class="size-control">
-              <label for="size-range">Size</label>
+              <label for="size-range" class="muted">Size</label>
               <input
                 id="size-range"
                 type="range"
@@ -178,7 +181,7 @@
                 step="10"
                 value="280"
               />
-              <span id="size-value" class="muted">280px</span>
+              <span id="size-value">280px</span>
             </div>
           </footer>
         </article>
